@@ -10,6 +10,10 @@
 #include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
 
+/*
+ * Task function for managing IMU data reading
+ */
+
 void ReadIMU(void const * argument)
 {
 	/* Infinite loop */

@@ -9,6 +9,9 @@
 #include "cmsis_os.h"
 #include "stm32f7xx_hal.h"
 
+/*
+ * Task function for managing PWM outputs
+ */
 void SetPWMOutput(void const * argument)
 {
 	/* Infinite loop */

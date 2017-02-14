@@ -9,6 +9,10 @@
 #include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
 
+/*
+ * Task function for managing debug information
+ */
+
 void WriteDebug(void const * argument)
 {
 	/* Infinite loop */
