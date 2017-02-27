@@ -45,6 +45,7 @@
 #include "stm32f7xx_hal.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
+#include "DebugTask.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -56,8 +57,6 @@
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
-
-USART_HandleTypeDef husart1;
 
 osThreadId defaultTaskHandle;
 osThreadId IMUTaskHandle;
@@ -72,10 +71,8 @@ osMessageQId debugQueueHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void Error_Handler(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_USART1_Init(void);
 static void MX_TIM2_Init(void);
 void StartDefaultTask(void const * argument);
 extern void ReadIMU(void const * argument);
@@ -320,25 +317,7 @@ static void MX_TIM2_Init(void)
 
 }
 
-/* USART1 init function */
-static void MX_USART1_Init(void)
-{
 
-  husart1.Instance = USART1;
-  husart1.Init.BaudRate = 115200;
-  husart1.Init.WordLength = USART_WORDLENGTH_7B;
-  husart1.Init.StopBits = USART_STOPBITS_1;
-  husart1.Init.Parity = USART_PARITY_NONE;
-  husart1.Init.Mode = USART_MODE_TX_RX;
-  husart1.Init.CLKPolarity = USART_POLARITY_LOW;
-  husart1.Init.CLKPhase = USART_PHASE_1EDGE;
-  husart1.Init.CLKLastBit = USART_LASTBIT_DISABLE;
-  if (HAL_USART_Init(&husart1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-}
 
 /** Configure pins as 
         * Analog 
