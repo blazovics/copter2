@@ -44,5 +44,7 @@ void WriteDebug(void const * argument)
 	{
 		osDelay(1000);
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_7);
+		uint8_t * test = "test";
+		HAL_USART_Transmit(&husart1, (uint8_t *)&test, 4, 0xFFFF);
 	}
 }
