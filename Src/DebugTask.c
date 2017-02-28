@@ -13,7 +13,8 @@
 
 UART_HandleTypeDef huart1;
 
-char buffer[256] = "";
+char buffer[256] = "test";
+volatile char rxBuf[2];
 
 /* USART1 init function */
 void MX_USART1_UART_Init(void)
@@ -47,6 +48,7 @@ void setBuffer(const char text[256]) {
 
 void WriteDebug(void const * argument)
 {
+	HAL_UART_Receive_IT(&huart1, rxBuf, 1);
 	/* Infinite loop */
 	for(;;)
 	{
@@ -55,13 +57,16 @@ void WriteDebug(void const * argument)
 		if (strlen(buffer) > 0) {
 			HAL_UART_Transmit(&huart1, (uint8_t *) buffer, strlen(buffer), 120);
 			strcpy(buffer, "");
-		} else {
-			char text[5];
-			for (int i = 0; i < 4; ++i) {
-				text[i] = i + 65;
-			}
-			text[4] = '\0';
-			setBuffer(text);
 		}
 	}
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1)
+  {
+    // Your buffer is full with your data process it here or set a flag
+	  strcat(buffer, rxBuf);
+	  HAL_UART_Receive_IT(&huart1, rxBuf, 1);
+  }
 }
