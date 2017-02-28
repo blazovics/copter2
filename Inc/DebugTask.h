@@ -10,6 +10,7 @@
 #define DEBUGTASK_H_
 
 void MX_USART1_UART_Init(void);
+void setBuffer(const char text[256]);
 void WriteDebug(void const * argument);
 
 #endif /* DEBUGTASK_H_ */

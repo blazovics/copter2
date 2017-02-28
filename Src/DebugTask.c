@@ -13,6 +13,8 @@
 
 UART_HandleTypeDef huart1;
 
+char buffer[256] = "";
+
 /* USART1 init function */
 void MX_USART1_UART_Init(void)
 {
@@ -34,6 +36,10 @@ void MX_USART1_UART_Init(void)
 
 }
 
+void setBuffer(const char text[256]) {
+	strcpy(buffer, text);
+}
+
 /*
  * Task function for managing debug information
  */
@@ -46,7 +52,16 @@ void WriteDebug(void const * argument)
 	{
 		osDelay(1000);
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_7);
-		uint8_t * test = "test";
-		HAL_UART_Transmit(&huart1, (uint8_t *)test, strlen(test), 120);
+		if (strlen(buffer) > 0) {
+			HAL_UART_Transmit(&huart1, (uint8_t *) buffer, strlen(buffer), 120);
+			strcpy(buffer, "");
+		} else {
+			char text[5];
+			for (int i = 0; i < 4; ++i) {
+				text[i] = i + 65;
+			}
+			text[4] = '\0';
+			setBuffer(text);
+		}
 	}
 }
