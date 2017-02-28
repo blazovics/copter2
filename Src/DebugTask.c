@@ -5,27 +5,29 @@
  *      Author: blazovics
  */
 
+#include <string.h>
 #include "DebugTask.h"
 #include "stm32f7xx_hal.h"
-#include "stm32f7xx_hal_usart.h"
+#include "stm32f7xx_hal_uart.h"
 #include "cmsis_os.h"
 
-USART_HandleTypeDef husart1;
+UART_HandleTypeDef huart1;
 
 /* USART1 init function */
-void MX_USART1_Init(void)
+void MX_USART1_UART_Init(void)
 {
 
-  husart1.Instance = USART1;
-  husart1.Init.BaudRate = 115200;
-  husart1.Init.WordLength = USART_WORDLENGTH_7B;
-  husart1.Init.StopBits = USART_STOPBITS_1;
-  husart1.Init.Parity = USART_PARITY_NONE;
-  husart1.Init.Mode = USART_MODE_TX_RX;
-  husart1.Init.CLKPolarity = USART_POLARITY_LOW;
-  husart1.Init.CLKPhase = USART_PHASE_1EDGE;
-  husart1.Init.CLKLastBit = USART_LASTBIT_DISABLE;
-  if (HAL_USART_Init(&husart1) != HAL_OK)
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_7B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -45,6 +47,6 @@ void WriteDebug(void const * argument)
 		osDelay(1000);
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_7);
 		uint8_t * test = "test";
-		HAL_USART_Transmit(&husart1, (uint8_t *)&test, 4, 0xFFFF);
+		HAL_UART_Transmit(&huart1, (uint8_t *)test, strlen(test), 120);
 	}
 }
