@@ -1,11 +1,5 @@
-/*
- * DebugTask.c
- *
- *  Created on: 2017. febr. 14.
- *      Author: blazovics
- */
-
 #include <string.h>
+#include <stdbool.h>
 #include "DebugTask.h"
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_uart.h"
@@ -13,9 +7,15 @@
 
 UART_HandleTypeDef huart1;
 
-char buffer[256] = "test";
+struct Queue {
+	unsigned int messageCount;
+	char buffer[lineLength][bufferSize];
+};
+
+struct Queue messageQueue;
+
 volatile char rxBuf;
-char receiveBuffer[256] = "";
+char receiveBuffer[lineLength] = "";
 
 /* USART1 init function */
 void MX_USART1_UART_Init(void)
@@ -38,8 +38,12 @@ void MX_USART1_UART_Init(void)
 
 }
 
-void setBuffer(const char text[256]) {
-	strcpy(buffer, text);
+bool pushMessage(const char text[256]) {
+	if (messageQueue.messageCount == bufferSize) {
+		return false;
+	}
+	strcpy(messageQueue.buffer[messageQueue.messageCount++], text);
+	return true;
 }
 
 /*
@@ -49,16 +53,20 @@ void setBuffer(const char text[256]) {
 
 void WriteDebug(void const * argument)
 {
+	messageQueue.messageCount = 0;
 	HAL_UART_Receive_IT(&huart1, &rxBuf, 1);
 	/* Infinite loop */
 	for(;;)
 	{
 		osDelay(1000);
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_7);
-		if (strlen(buffer) > 0) {
-			HAL_UART_Transmit(&huart1, (uint8_t *) buffer, strlen(buffer), 120);
-			strcpy(buffer, "");
+		if (messageQueue.messageCount > 0) {
+			int count = messageQueue.messageCount;
+			for (int i = 0; i < count; ++i) {
+				HAL_UART_Transmit(&huart1, (uint8_t *) messageQueue.buffer[i], strlen(messageQueue.buffer[i]), 120);
+			}
 		}
+		messageQueue.messageCount = 0;
 	}
 }
 
@@ -69,7 +77,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     // Your buffer is full with your data process it here or set a flag
 	  if (rxBuf == '\n' || rxBuf == '\r') {
 		  strcat(receiveBuffer, "\r\n");
-		  setBuffer(receiveBuffer);
+		  pushMessage(receiveBuffer);
 		  strcpy(receiveBuffer, "");
 	  } else {
 		  int len = strlen(receiveBuffer);
