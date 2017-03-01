@@ -1,11 +1,3 @@
-/*
- * DebugTask.h
-
- *
- *  Created on: 2017. febr. 14.
- *      Author: blazovics
- */
-
 #ifndef DEBUGTASK_H_
 #define DEBUGTASK_H_
 
@@ -18,4 +10,4 @@ void MX_USART1_UART_Init(void);
 bool pushMessage(const char text[lineLength]);
 void WriteDebug(void const * argument);
 
-#endif /* DEBUGTASK_H_ */
+#endif
