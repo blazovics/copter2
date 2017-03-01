@@ -43,6 +43,7 @@ bool pushMessage(const char text[256]) {
 
 void WriteDebug(void const * argument) {
   messageQueue.messageCount = 0;
+  pushMessage("UART initialization complete!\r\n");
   HAL_UART_Receive_IT(&huart1, &rxBuf, 1);
 
   for(;;) {
@@ -52,7 +53,7 @@ void WriteDebug(void const * argument) {
       int count = messageQueue.messageCount;
       for (int i = 0; i < count; ++i) {
         HAL_UART_Transmit(&huart1, (uint8_t *) messageQueue.buffer[i], strlen(messageQueue.buffer[i]), 120);
-        messageQueue.mesageCount--;
+        messageQueue.messageCount--;
       }
     }
   }
