@@ -1,7 +1,6 @@
 #MicroXplorer Configuration settings - do not modify
 FREERTOS.FootprintOK=true
-FREERTOS.IPParameters=Tasks01,Queues01,FootprintOK,configTOTAL_HEAP_SIZE
-FREERTOS.Queues01=debugQueue,1024,float,NULL,Dynamic,NULL,NULL
+FREERTOS.IPParameters=Tasks01,FootprintOK,configTOTAL_HEAP_SIZE
 FREERTOS.Tasks01=defaultTask,0,128,StartDefaultTask,Default,NULL,Dynamic,NULL,NULL;IMUTask,0,1024,ReadIMU,As external,NULL,Dynamic,NULL,NULL;DebugTask,-3,1024,WriteDebug,As external,NULL,Dynamic,NULL,NULL;PWMTask,0,1024,SetPWMOutput,As external,NULL,Dynamic,NULL,NULL
 FREERTOS.configTOTAL_HEAP_SIZE=131072
 File.Version=6

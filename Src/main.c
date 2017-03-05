@@ -62,7 +62,6 @@ osThreadId defaultTaskHandle;
 osThreadId IMUTaskHandle;
 osThreadId DebugTaskHandle;
 osThreadId PWMTaskHandle;
-osMessageQId debugQueueHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -148,11 +147,6 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
-
-  /* Create the queue(s) */
-  /* definition and creation of debugQueue */
-  osMessageQDef(debugQueue, 1024, float);
-  debugQueueHandle = osMessageCreate(osMessageQ(debugQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
