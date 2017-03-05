@@ -4,15 +4,12 @@
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_uart.h"
 #include "cmsis_os.h"
+#include "queue.h"
 
 UART_HandleTypeDef huart1;
 
-struct Queue {
-  unsigned int messageCount;
-  char buffer[lineLength][bufferSize];
-};
-
-struct Queue messageQueue;
+QueueHandle_t queue;
+unsigned int messageCount = 0;
 
 volatile char rxBuf;
 char receiveBuffer[lineLength] = "";
@@ -34,26 +31,29 @@ void MX_USART1_UART_Init(void) {
 }
 
 bool pushMessage(const char text[256]) {
-  if (messageQueue.messageCount == bufferSize) {
+  if (xQueueSendToBackFromISR(queue, text, 0) == pdPASS) {
+    messageCount++;
+    return true;
+  } else {
     return false;
   }
-  strcpy(messageQueue.buffer[messageQueue.messageCount++], text);
-  return true;
 }
 
 void WriteDebug(void const * argument) {
-  messageQueue.messageCount = 0;
+  queue = xQueueCreate(bufferSize, sizeof(char) * lineLength);
   pushMessage("UART initialization complete!\r\n");
   HAL_UART_Receive_IT(&huart1, &rxBuf, 1);
 
   for(;;) {
     osDelay(1000);
     HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_7);
-    if (messageQueue.messageCount > 0) {
-      int count = messageQueue.messageCount;
+    if (messageCount > 0) {
+      int count = messageCount;
       for (int i = 0; i < count; ++i) {
-        HAL_UART_Transmit(&huart1, (uint8_t *) messageQueue.buffer[i], strlen(messageQueue.buffer[i]), 120);
-        messageQueue.messageCount--;
+        char local[256];
+        xQueueReceive(queue, &local, portMAX_DELAY);
+        HAL_UART_Transmit(&huart1, (uint8_t *) local, strlen(local), 120);
+        messageCount--;
       }
     }
   }
