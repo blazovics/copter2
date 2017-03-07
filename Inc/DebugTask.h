@@ -6,6 +6,13 @@
 
 #include <stdbool.h>
 
+typedef struct {
+	char messageId;
+	uint32_t timestamp;
+	char dataCount;
+	float data[4];
+} DebugMessage;
+
 void MX_USART1_UART_Init(void);
 bool pushMessage(const char text[lineLength]);
 void WriteDebug(void const * argument);
