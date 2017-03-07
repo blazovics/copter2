@@ -6,28 +6,16 @@
 #include "cmsis_os.h"
 #include "queue.h"
 
-UART_HandleTypeDef huart1;
+static UART_HandleTypeDef * huart1;
 
-QueueHandle_t queue;
-unsigned int messageCount = 0;
+static QueueHandle_t queue;
+static unsigned int messageCount = 0;
 
-volatile char rxBuf;
-char receiveBuffer[lineLength] = "";
+static volatile char rxBuf;
+static char receiveBuffer[lineLength] = "";
 
-void MX_USART1_UART_Init(void) {
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_7B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart1) != HAL_OK) {
-    Error_Handler();
-  }
+void setDebugUartHandler(UART_HandleTypeDef * huart) {
+	huart1 = huart;
 }
 
 bool pushMessage(const char text[256]) {
@@ -42,7 +30,7 @@ bool pushMessage(const char text[256]) {
 void WriteDebug(void const * argument) {
   queue = xQueueCreate(bufferSize, sizeof(char) * lineLength);
   pushMessage("UART initialization complete!\r\n");
-  HAL_UART_Receive_IT(&huart1, &rxBuf, 1);
+  HAL_UART_Receive_IT(huart1, &rxBuf, 1);
 
   for(;;) {
     osDelay(1000);
@@ -52,7 +40,7 @@ void WriteDebug(void const * argument) {
       for (int i = 0; i < count; ++i) {
         char local[256];
         xQueueReceive(queue, &local, portMAX_DELAY);
-        HAL_UART_Transmit(&huart1, (uint8_t *) local, strlen(local), 120);
+        HAL_UART_Transmit(huart1, (uint8_t *) local, strlen(local), 120);
         messageCount--;
       }
     }
@@ -70,6 +58,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
       receiveBuffer[len] = rxBuf;
       receiveBuffer[len+1] = '\0';;
     }
-    HAL_UART_Receive_IT(&huart1, &rxBuf, 1);
+    HAL_UART_Receive_IT(huart1, &rxBuf, 1);
   }
 }
