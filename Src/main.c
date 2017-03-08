@@ -47,7 +47,7 @@
 #include "fatfs.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "DebugTask.h"
 
 /* USER CODE END Includes */
 
