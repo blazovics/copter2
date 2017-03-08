@@ -8,7 +8,7 @@
 #include "queue.h"
 #include "semphr.h"
 
-static UART_HandleTypeDef * huart1 = NULL;
+static UART_HandleTypeDef * localUartHandler = NULL;
 
 static QueueHandle_t queue;
 static unsigned int messageCount = 0;
@@ -19,7 +19,7 @@ static char receiveBuffer[lineLength] = "";
 static SemaphoreHandle_t xSemaphore;
 
 void setDebugUartHandler(UART_HandleTypeDef * huart) {
-	huart1 = huart;
+	localUartHandler = huart;
 }
 
 bool pushMessage(const char text[256]) {
@@ -32,12 +32,12 @@ bool pushMessage(const char text[256]) {
 }
 
 void WriteDebug(void const * argument) {
-	if (huart1 == NULL) {
+	if (localUartHandler == NULL) {
 		return;
 	}
   queue = xQueueCreate(bufferSize, sizeof(char) * lineLength);
   pushMessage("UART initialization complete!\r\n");
-  HAL_UART_Receive_IT(huart1, &rxBuf, 1);
+  HAL_UART_Receive_IT(localUartHandler, &rxBuf, 1);
 
   for(;;) {
     osDelay(1000);
@@ -47,7 +47,7 @@ void WriteDebug(void const * argument) {
       for (int i = 0; i < count; ++i) {
         char local[256];
         xQueueReceive(queue, &local, portMAX_DELAY);
-        HAL_UART_Transmit(huart1, (uint8_t *) local, strlen(local), 120);
+        HAL_UART_Transmit(localUartHandler, (uint8_t *) local, strlen(local), 120);
         messageCount--;
       }
     }
@@ -55,7 +55,7 @@ void WriteDebug(void const * argument) {
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART1) {
+  if (huart->Instance == localUartHandler->Instance) {
     if (rxBuf == '\n' || rxBuf == '\r') {
       strcat(receiveBuffer, "\r\n");
       pushMessage(receiveBuffer);
@@ -65,6 +65,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
       receiveBuffer[len] = rxBuf;
       receiveBuffer[len+1] = '\0';;
     }
-    HAL_UART_Receive_IT(huart1, &rxBuf, 1);
+    HAL_UART_Receive_IT(localUartHandler, &rxBuf, 1);
   }
 }
