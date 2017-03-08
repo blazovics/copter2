@@ -1,18 +1,22 @@
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "DebugTask.h"
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_uart.h"
 #include "cmsis_os.h"
 #include "queue.h"
+#include "semphr.h"
 
-static UART_HandleTypeDef * huart1;
+static UART_HandleTypeDef * huart1 = NULL;
 
 static QueueHandle_t queue;
 static unsigned int messageCount = 0;
 
 static volatile char rxBuf;
 static char receiveBuffer[lineLength] = "";
+
+static SemaphoreHandle_t xSemaphore;
 
 void setDebugUartHandler(UART_HandleTypeDef * huart) {
 	huart1 = huart;
@@ -28,6 +32,9 @@ bool pushMessage(const char text[256]) {
 }
 
 void WriteDebug(void const * argument) {
+	if (huart1 == NULL) {
+		return;
+	}
   queue = xQueueCreate(bufferSize, sizeof(char) * lineLength);
   pushMessage("UART initialization complete!\r\n");
   HAL_UART_Receive_IT(huart1, &rxBuf, 1);
