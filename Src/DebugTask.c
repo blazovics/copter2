@@ -22,7 +22,7 @@ void setDebugUartHandler(UART_HandleTypeDef * huart) {
 	localUartHandler = huart;
 }
 
-bool pushMessage(const char text[256]) {
+bool pushMessage(const char text[lineLength]) {
   if (xQueueSendToBackFromISR(queue, text, 0) == pdPASS) {
     messageCount++;
     return true;
