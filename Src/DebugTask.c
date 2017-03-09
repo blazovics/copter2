@@ -6,7 +6,6 @@
 #include "stm32f7xx_hal_uart.h"
 #include "cmsis_os.h"
 #include "queue.h"
-#include "semphr.h"
 
 static UART_HandleTypeDef * localUartHandler = NULL;
 
@@ -15,8 +14,6 @@ static unsigned int messageCount = 0;
 
 static volatile char rxBuf;
 static char receiveBuffer[lineLength] = "";
-
-static SemaphoreHandle_t xSemaphore;
 
 void setDebugUartHandler(UART_HandleTypeDef * huart) {
 	localUartHandler = huart;

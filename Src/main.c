@@ -48,6 +48,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "DebugTask.h"
+#include "sharedResources.h"
 
 /* USER CODE END Includes */
 
@@ -116,6 +117,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   setDebugUartHandler(&huart1);
+  initializeResources();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
