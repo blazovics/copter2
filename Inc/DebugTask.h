@@ -18,6 +18,7 @@ typedef struct {
 
 void setDebugUartHandler(UART_HandleTypeDef * huart);
 bool pushMessage(const char text[lineLength]);
+bool pushDebugMessage(DebugMessage message);
 void WriteDebug(void const * argument);
 
 #endif
