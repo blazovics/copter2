@@ -19,7 +19,7 @@
 
 #define IMU_I2C_ADDR  					0x68 /*AD0 is GND */
 /* Slave 0 addresses */
-#define IMU_I2C_SLV0_ADDR 				0x25 /* I2C address of Slave 0 */
+#define IMU_I2C_SLV0_ADDR 				0x25 /* I2C address of Slave 0  AD0 = 0*/
 #define IMU_I2C_SLV0_REG  				0x26 /* internal register within Slave 0 */
 #define IMU_I2C_SLV1_CTRL 				0x27 /* Slave 0 control register address */
 #define IMU_I2C_SLV1_DO	  				0x63 /* Slave 0 data register address */
@@ -61,6 +61,21 @@
 
 #define IMU_REG_FIFO_RW					0x74 /* FIFO read/write register address */
 
+#define IMU_REG_ACCEL_X_H				0x3B
+#define IMU_REG_ACCEL_X_L				0x3C
+#define IMU_REG_ACCEL_Y_H				0x3D
+#define IMU_REG_ACCEL_Y_L				0x3E
+#define IMU_REG_ACCEL_Z_H				0x3F
+#define IMU_REG_ACCEL_Z_L				0x40
+
+#define IMU_REG_GYRO_X_H				0x43
+#define IMU_REG_GYRO_X_L				0x44
+#define IMU_REG_GYRO_Y_H				0x45
+#define IMU_REG_GYRO_Y_L				0x46
+#define IMU_REG_GYRO_Z_H				0x47
+#define IMU_REG_GYRO_Z_L				0x48
+
+
 
 
 /* type definitions */
@@ -92,6 +107,9 @@ typedef struct{
 /* API declaration */
 bool IMU_Init(void);
 bool IMU_FIFOread(IMU_accel_t* accelData, IMU_gyro_t* gyroData);
+bool IMU_sensRegRead(IMU_accel_t* accelData, IMU_gyro_t* gyroData);
 bool IMU_initReady(void);
+bool IMU_measurementReady(void);
+HAL_StatusTypeDef IMU_registerWrite(uint8_t slaveAddr, uint8_t regAddr, uint8_t data);
 
 #endif /* IMU_H_ */

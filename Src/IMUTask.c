@@ -14,7 +14,6 @@
 /*
  * Task function for managing IMU data reading
  */
-extern UART_HandleTypeDef huart3;
 IMU_gyro_t gyroData;
 IMU_accel_t accelData;
 
@@ -28,6 +27,11 @@ void ReadIMU(void const * argument)
 	//HAL_StatusTypeDef status;
 	int currIndex;
 	/* Infinite loop */
+
+//	while(1)
+//	{
+//		IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_POWER_MGMT, IMU_CMD_RESET);
+//	}
 
 	if(!IMU_initReady())
 	{
@@ -50,43 +54,42 @@ void ReadIMU(void const * argument)
 	{
 		osDelay(1000);
 		//char test = 'k';
-		if(!IMU_FIFOread(&accelData, &gyroData))
+		/* check if measurement is ready */
+		if(IMU_measurementReady())
 		{
+			HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
+			if(!IMU_sensRegRead(&accelData, & gyroData))//!IMU_FIFOread(&accelData, &gyroData))
+			{
 #ifdef DEBUG
-			while(1) {}
+				while(1) {}
+#endif
+			}
+#ifdef DEBUG
+			else
+			{
+				//HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_14);
+				/* save data in test buffer */
+				currIndex = accelTestData.index;
+				if(currIndex == 20)
+				{
+					//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_7, GPIO_PIN_SET);
+					currIndex = 0;
+					accelTestData.index = 0;
+					gyroTestData.index = 0;
+				}
+				accelTestData.index++;
+				accelTestData.accelTestArr[currIndex].x = accelData.x;
+				accelTestData.accelTestArr[currIndex].y = accelData.y;
+				accelTestData.accelTestArr[currIndex].z = accelData.z;
+
+				currIndex = gyroTestData.index;
+				gyroTestData.index++;
+				gyroTestData.gyroTestArr[currIndex].x = gyroData.x;
+				gyroTestData.gyroTestArr[currIndex].y = gyroData.y;
+				gyroTestData.gyroTestArr[currIndex].z = gyroData.z;
+
+			}
 #endif
 		}
-#ifdef DEBUG
-		else
-		{
-			/* save data in test buffer */
-			currIndex = accelTestData.index;
-			if(currIndex == 20)
-			{
-				//HAL_GPIO_WritePin(GPIOB,GPIO_PIN_7, GPIO_PIN_SET);
-				while(1){}
-			}
-			accelTestData.index++;
-			accelTestData.accelTestArr[currIndex].x = accelData.x;
-			accelTestData.accelTestArr[currIndex].y = accelData.y;
-			accelTestData.accelTestArr[currIndex].z = accelData.z;
-
-			currIndex = gyroTestData.index;
-			gyroTestData.index++;
-			gyroTestData.gyroTestArr[currIndex].x = gyroData.x;
-			gyroTestData.gyroTestArr[currIndex].y = gyroData.y;
-			gyroTestData.gyroTestArr[currIndex].z = gyroData.z;
-
-		}
-#endif
-/*		status = HAL_UART_Transmit(&huart3, (uint8_t *)&test, 1, 120);
-		if(status != HAL_OK)
-		{
-#ifdef DEBUG
-			while(1)
-			{
-			}
-#endif
-		} */
 	}
 }

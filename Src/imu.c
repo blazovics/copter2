@@ -18,15 +18,12 @@ bool IMU_init = false;
 HAL_StatusTypeDef IMU_registerWrite(uint8_t slaveAddr, uint8_t regAddr, uint8_t data)
 {
 	uint16_t devAddr = (0x0000 | slaveAddr) << 1;
-	uint8_t dataVal = data;
+	uint16_t regAddrTx = (uint16_t) regAddr;
 	HAL_StatusTypeDef retVal = HAL_OK;
+	uint8_t txData = data;
 
-	retVal = HAL_I2C_Mem_Write(&hi2c1, devAddr, regAddr, 1, &dataVal, 1, -1);
-	if(retVal == HAL_ERROR)
-	{
-		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_14, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(GPIOB,GPIO_PIN_7, GPIO_PIN_SET);
-	}
+	//retVal = HAL_I2C_Master_Transmit(&hi2c1, devAddr, &data2Transmit[0], 2, 0xFFFF);
+	retVal = HAL_I2C_Mem_Write(&hi2c1, devAddr, regAddrTx, 1, &txData, 1, 0xFFFF);
 
 	return retVal;
 };
@@ -62,51 +59,51 @@ bool IMU_Init(void)
 	IMU_init = false;
 
 	/* reset MPU6050 */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_POWER_MGMT, IMU_CMD_RESET) != HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_POWER_MGMT, IMU_CMD_RESET) != HAL_OK)
 	{
 		errFlag = true;
 	}
 	HAL_Delay(100);
 
 	/*wake up MPU6050 */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_POWER_MGMT, IMU_CMD_WAKEUP) != HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_POWER_MGMT, IMU_CMD_WAKEUP) != HAL_OK)
 	{
 		errFlag = true;
 	}
 	HAL_Delay(100);
 
 	/* set sample rate to 100 Hz */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_SAMPLE_RATE_DIV, IMU_CMD_SAMPLE_RATE_SET)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_SAMPLE_RATE_DIV, IMU_CMD_SAMPLE_RATE_SET)!= HAL_OK)
 	{
 		errFlag = true;
 	}
 	/* configure LPF */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_CONFIG, IMU_CMD_ENABLE_LPF)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_CONFIG, IMU_CMD_ENABLE_LPF)!= HAL_OK)
 	{
 		errFlag = true;
 	}
 	/* configure gyroscope */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_GYRO_CONFIG, IMU_CMD_GYRO_CONFIG)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_GYRO_CONFIG, IMU_CMD_GYRO_CONFIG)!= HAL_OK)
 	{
 		errFlag = true;
 	}
 	/* configure acceleration sensor */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_ACCEL_CONFIG, IMU_CMD_ACCEL_CONFIG)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_ACCEL_CONFIG, IMU_CMD_ACCEL_CONFIG)!= HAL_OK)
 	{
 		errFlag = true;
 	}
 	/* enable FIFO */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_FIFO_EN, IMU_CMD_FIFO_EN)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_FIFO_EN, IMU_CMD_FIFO_EN)!= HAL_OK)
 	{
 		errFlag = true;
 	}
 	/* interrupt is cleared by any read operation */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_INT_CONFIG, IMU_CMD_INT_CONFIG)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_INT_CONFIG, IMU_CMD_INT_CONFIG)!= HAL_OK)
 	{
 		errFlag = true;
 	}
 	/* interrupts are generated if every measurement is ready */
-	if(IMU_registerWrite(IMU_I2C_SLV0_ADDR, IMU_REG_INT_ENABLE, IMU_CMD_INT_SETUP)!= HAL_OK)
+	if(IMU_registerWrite(IMU_I2C_ADDR, IMU_REG_INT_ENABLE, IMU_CMD_INT_SETUP)!= HAL_OK)
 	{
 		errFlag = true;
 	}
@@ -127,6 +124,11 @@ bool IMU_initReady(void)
 	return IMU_init;
 }
 
+bool IMU_measurementReady(void)
+{
+	return IMU_measReady;
+}
+
 uint16_t IMU_getSampleNum(void)
 {
 	uint16_t retVal = 0x0000;
@@ -141,10 +143,10 @@ uint16_t IMU_getSampleNum(void)
 #endif //DEBUG
 		}
 	}
-	if(IMU_registerRead(IMU_I2C_SLV0_ADDR, IMU_REG_FIFO_COUNT_H, &tmp) == HAL_OK)
+	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_FIFO_COUNT_H, &tmp) == HAL_OK)
 	{
 		sampleNumH = tmp;
-		if(IMU_registerRead(IMU_I2C_SLV0_ADDR, IMU_REG_FIFO_COUNT_L, &tmp) == HAL_OK)
+		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_FIFO_COUNT_L, &tmp) == HAL_OK)
 		{
 			sampleNumL = tmp;
 			retVal = UINT8_TO_UINT16(sampleNumH, sampleNumL);
@@ -172,7 +174,7 @@ bool IMU_FIFOread(IMU_accel_t* accelData, IMU_gyro_t* gyroData)
 	if(sampleNum != 0xFFFF && sampleNum != 0)
 	{
 		/* disable interrupts here */
-		if(IMU_burstRead(IMU_I2C_SLV0_ADDR, IMU_REG_FIFO_RW, data, 12) == HAL_OK)
+		if(IMU_burstRead(IMU_I2C_ADDR, IMU_REG_FIFO_RW, data, 12) == HAL_OK)
 		{
 			accelData->x = UINT8_TO_UINT16(data[0], data[1]);
 			accelData->y = UINT8_TO_UINT16(data[2], data[3]);
@@ -185,9 +187,6 @@ bool IMU_FIFOread(IMU_accel_t* accelData, IMU_gyro_t* gyroData)
 		}
 		else
 		{
-			while(1)
-			{
-			}
 			retVal = false;
 		}
 	}
@@ -198,6 +197,130 @@ bool IMU_FIFOread(IMU_accel_t* accelData, IMU_gyro_t* gyroData)
 	return retVal;
 }
 
+bool IMU_sensRegRead(IMU_accel_t* accelData, IMU_gyro_t* gyroData)
+{
+	//uint8_t tempH, tempL;
+	bool retVal = true;
+	uint8_t data[14];
+
+	if(IMU_burstRead(IMU_I2C_ADDR, IMU_REG_ACCEL_X_H, data, 14) == HAL_OK)
+	{
+		accelData->x = UINT8_TO_UINT16(data[0], data[1]);
+		accelData->y = UINT8_TO_UINT16(data[2], data[3]);
+		accelData->z = UINT8_TO_UINT16(data[4], data[5]);
+
+		gyroData->x  = UINT8_TO_UINT16(data[8], data[9]);
+		gyroData->y  = UINT8_TO_UINT16(data[10], data[11]);
+		gyroData->z  = UINT8_TO_UINT16(data[12], data[13]);
+	}
+	else
+	{
+		retVal = false;
+	}
+
+	return retVal;
+//	/* read gyro data */
+//	/* X */
+//	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_GYRO_X_H, &tempH) == HAL_OK)
+//	{
+//		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_GYRO_X_L, &tempL) == HAL_OK)
+//		{
+//			gyroData->x = UINT8_TO_UINT16(tempH, tempL);
+//		}
+//		else
+//		{
+//			retVal = false;
+//		}
+//	}
+//	else
+//	{
+//		retVal = false;
+//	}
+//	/* Y */
+//	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_GYRO_Y_H, &tempH) == HAL_OK)
+//	{
+//		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_GYRO_Y_L, &tempL) == HAL_OK)
+//		{
+//			gyroData->y = UINT8_TO_UINT16(tempH, tempL);
+//		}
+//		else
+//		{
+//			retVal = false;
+//		}
+//	}
+//	else
+//	{
+//		retVal = false;
+//	}
+//	/* Z */
+//	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_GYRO_Z_H, &tempH) == HAL_OK)
+//	{
+//		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_GYRO_Z_L, &tempL) == HAL_OK)
+//		{
+//			gyroData->z = UINT8_TO_UINT16(tempH, tempL);
+//		}
+//		else
+//		{
+//			retVal = false;
+//		}
+//	}
+//	else
+//	{
+//		retVal = false;
+//	}
+//
+//	/*read acceleration data */
+//	/* X */
+//	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_ACCEL_X_H, &tempH) == HAL_OK)
+//	{
+//		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_ACCEL_X_L, &tempL) == HAL_OK)
+//		{
+//			accelData->x = UINT8_TO_UINT16(tempH, tempL);
+//		}
+//		else
+//		{
+//			retVal = false;
+//		}
+//	}
+//	else
+//	{
+//		retVal = false;
+//	}
+//	/* Y */
+//	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_ACCEL_Y_H, &tempH) == HAL_OK)
+//	{
+//		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_ACCEL_Y_L, &tempL) == HAL_OK)
+//		{
+//				accelData->y = UINT8_TO_UINT16(tempH, tempL);
+//		}
+//		else
+//		{
+//			retVal = false;
+//		}
+//	}
+//	else
+//	{
+//		retVal = false;
+//	}
+//	/* Z */
+//	if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_ACCEL_Z_H, &tempH) == HAL_OK)
+//	{
+//		if(IMU_registerRead(IMU_I2C_ADDR, IMU_REG_ACCEL_Z_L, &tempL) == HAL_OK)
+//		{
+//			accelData->z = UINT8_TO_UINT16(tempH, tempL);
+//		}
+//		else
+//		{
+//			retVal = false;
+//		}
+//	}
+//	else
+//	{
+//		retVal = false;
+//	}
+
+
+}
 /* external interrupt handler function */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
@@ -205,7 +328,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   {
     /* set global flag */
 	IMU_measReady = true;
-	HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_14);
   }
 }
 
