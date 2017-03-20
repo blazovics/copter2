@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <machine/endian.h>
 #include "DebugTask.h"
 #include "stm32f7xx_hal.h"
 #include "stm32f7xx_hal_uart.h"
@@ -40,25 +41,39 @@ bool pushDebugMessage(DebugMessage message) {
 	  }
 }
 
-static void getDebugLine(char buffer[lineLength]) {
+// copied for testing from http://stackoverflow.com/a/10621440
+static float htonf(float val) {
+    uint32_t rep;
+    memcpy(&rep, &val, sizeof rep);
+    rep = __htonl(rep);
+    memcpy(&val, &rep, sizeof rep);
+    return val;
+}
+
+static int getDebugLine(char buffer[lineLength]) {
     int count = debugMessageCount;
     int index;
     for (index = 0; index < 4; ++index) {
     	buffer[index] = ~0;
     }
-    for (int i = 0; i < count && index + 10 + 2 + 20 * 4 < lineLength ; ++i) {
+    for (int i = 0; i < count && index + sizeof(uint32_t) + 2 * sizeof(char) + 4 * sizeof(float) < lineLength ; ++i) {
       DebugMessage local;
       xQueueReceive(debugQueue, &local, portMAX_DELAY);
-      // 10 karakter, mert 0xffffffff == 4294967295 (10 karakter)
-      sprintf(&buffer[index], "%10lu", local.timestamp);
-      index += 10;
-      sprintf(&buffer[index], "%c%c", local.messageId, local.dataCount);
-      index += 2;
-      sprintf(&buffer[index], "%20.10f%20.10f%20.10f%20.10f", local.data[0], local.data[1], local.data[2], local.data[3]);
-      index += 20 * 4;
+      local.timestamp = __htonl(local.timestamp);
+      memcpy(buffer + index, &local.timestamp, sizeof(uint32_t));
+      index += sizeof(uint32_t);
+      memcpy(buffer + index, &local.messageId, sizeof(char));
+      index += sizeof(char);
+      memcpy(buffer + index, &local.dataCount, sizeof(char));
+      index += sizeof(char);
+      for (int i = 0; i < 4; ++i) {
+    	  local.data[i] = htonf(local.data[i]);
+          memcpy(buffer + index, &local.data[i], sizeof(float));
+          index += sizeof(float);
+      }
       debugMessageCount--;
     }
-    buffer[index] = '\0';
+    return index;
 }
 
 void WriteDebug(void const * argument) {
@@ -99,8 +114,8 @@ void WriteDebug(void const * argument) {
     // send debug messages
     if (debugMessageCount > 0) {
     	char buffer[lineLength];
-    	getDebugLine(buffer);
-    	HAL_UART_Transmit(localUartHandler, (uint8_t *) buffer, strlen(buffer), 120);
+    	int len = getDebugLine(buffer);
+    	HAL_UART_Transmit(localUartHandler, (uint8_t *) buffer, len, 120);
     }
   }
 }
