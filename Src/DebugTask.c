@@ -59,6 +59,7 @@ static int getDebugLine(char buffer[lineLength]) {
     for (int i = 0; i < count && index + sizeof(uint32_t) + 2 * sizeof(char) + 4 * sizeof(float) < lineLength ; ++i) {
       DebugMessage local;
       xQueueReceive(debugQueue, &local, portMAX_DELAY);
+
       local.timestamp = __htonl(local.timestamp);
       memcpy(buffer + index, &local.timestamp, sizeof(uint32_t));
       index += sizeof(uint32_t);
@@ -71,6 +72,7 @@ static int getDebugLine(char buffer[lineLength]) {
           memcpy(buffer + index, &local.data[i], sizeof(float));
           index += sizeof(float);
       }
+
       debugMessageCount--;
     }
     return index;
@@ -82,10 +84,10 @@ void WriteDebug(void const * argument) {
 	}
   queue = xQueueCreate(bufferSize, sizeof(char) * lineLength);
   debugQueue = xQueueCreate(bufferSize, sizeof(DebugMessage));
-  pushMessage("UART initialization complete!\r\n");
+  // pushMessage("UART initialization complete!\r\n");
   HAL_UART_Receive_IT(localUartHandler, &rxBuf, 1);
 
-
+  /*
   DebugMessage test;
   test.dataCount = '4';
   test.messageId = 'x';
@@ -95,6 +97,7 @@ void WriteDebug(void const * argument) {
   test.data[2] = 6.28;
   test.data[3] = 0;
   pushDebugMessage(test);
+  */
 
   for(;;) {
     osDelay(1000);

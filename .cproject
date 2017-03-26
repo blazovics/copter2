@@ -48,7 +48,7 @@
 									<listOptionValue builtIn="false" value="&quot;__packed=__attribute__((__packed__))&quot;" />
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER" />
 									<listOptionValue builtIn="false" value="STM32F767xx" />
-								<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" /><listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" /></option>
+								</option>
 								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.misc.other.1250181476" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-fmessage-length=0" valueType="string" />
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.87184007" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c" />
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1842561659" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s" />
@@ -136,7 +136,7 @@
 									<listOptionValue builtIn="false" value="&quot;__packed=__attribute__((__packed__))&quot;" />
 									<listOptionValue builtIn="false" value="USE_HAL_DRIVER" />
 									<listOptionValue builtIn="false" value="STM32F767xx" />
-								<listOptionValue builtIn="false" value="__weak=__attribute__((weak))" /><listOptionValue builtIn="false" value="__packed=__attribute__((__packed__))" /></option>
+								</option>
 								<option id="fr.ac6.managedbuild.gnu.c.compiler.option.misc.other.1250181476" superClass="fr.ac6.managedbuild.gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-fmessage-length=0" valueType="string" />
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c.87184007" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.c" />
 								<inputType id="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s.1842561659" superClass="fr.ac6.managedbuild.tool.gnu.cross.c.compiler.input.s" />

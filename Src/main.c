@@ -64,6 +64,7 @@ osThreadId defaultTaskHandle;
 osThreadId IMUTaskHandle;
 osThreadId DebugTaskHandle;
 osThreadId PWMTaskHandle;
+osThreadId controllerTaskHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -81,6 +82,7 @@ void StartDefaultTask(void const * argument);
 extern void ReadIMU(void const * argument);
 extern void WriteDebug(void const * argument);
 extern void SetPWMOutput(void const * argument);
+extern void StartController(void const * argument);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
                                 
@@ -148,6 +150,10 @@ int main(void)
   /* definition and creation of PWMTask */
   osThreadDef(PWMTask, SetPWMOutput, osPriorityNormal, 0, 1024);
   PWMTaskHandle = osThreadCreate(osThread(PWMTask), NULL);
+
+  /* definition and creation of controllerTask */
+  osThreadDef(controllerTask, StartController, osPriorityRealtime, 0, 1024);
+  controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
