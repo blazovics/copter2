@@ -52,8 +52,8 @@ char USER_Path[4];  /* USER logical drive path */
 
 void MX_FATFS_Init(void) 
 {
-		  /*## FatFS: Link the USER driver ###########################*/
-		  retUSER = FATFS_LinkDriver(&USER_Driver, USER_Path);
+  /*## FatFS: Link the USER driver ###########################*/
+  retUSER = FATFS_LinkDriver(&USER_Driver, USER_Path);
 
   /* USER CODE BEGIN Init */
   /* additional user code for init */     

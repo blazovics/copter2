@@ -56,19 +56,27 @@
 I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
+UART_HandleTypeDef huart7;
 USART_HandleTypeDef husart1;
 
 osThreadId defaultTaskHandle;
 osThreadId IMUTaskHandle;
 osThreadId DebugTaskHandle;
 osThreadId PWMTaskHandle;
+osThreadId BuzzerTaskHandle;
+osThreadId USDistMeterHandle;
 osMessageQId debugQueueHandle;
+osMessageQId BuzzerQueueHandle;
+osMessageQId DistQueueHandle;
+osSemaphoreId DistSyncBinarySemHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
 SemaphoreHandle_t pwmSemaphore = NULL;
+SemaphoreHandle_t usdistSemaphore = NULL;
 
 /* USER CODE END PV */
 
@@ -79,12 +87,17 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_UART7_Init(void);
 void StartDefaultTask(void const * argument);
 extern void ReadIMU(void const * argument);
 extern void WriteDebug(void const * argument);
 extern void SetPWMOutput(void const * argument);
+extern void RingBuzzer(void const * argument);
+extern void GetDistance(void const * argument);
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+                                
                                 
 
 /* USER CODE BEGIN PFP */
@@ -116,19 +129,27 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_UART7_Init();
 
   /* USER CODE BEGIN 2 */
-
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* definition and creation of DistSyncBinarySem */
+  osSemaphoreDef(DistSyncBinarySem);
+  DistSyncBinarySemHandle = osSemaphoreCreate(osSemaphore(DistSyncBinarySem), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
 
   vSemaphoreCreateBinary( pwmSemaphore );
+  vSemaphoreCreateBinary( usdistSemaphore );
 
   /* USER CODE END RTOS_SEMAPHORES */
 
@@ -153,6 +174,14 @@ int main(void)
   osThreadDef(PWMTask, SetPWMOutput, osPriorityNormal, 0, 1024);
   PWMTaskHandle = osThreadCreate(osThread(PWMTask), NULL);
 
+  /* definition and creation of BuzzerTask */
+  osThreadDef(BuzzerTask, RingBuzzer, osPriorityBelowNormal, 0, 1024);
+  BuzzerTaskHandle = osThreadCreate(osThread(BuzzerTask), NULL);
+
+  /* definition and creation of USDistMeter */
+  osThreadDef(USDistMeter, GetDistance, osPriorityNormal, 0, 1024);
+  USDistMeterHandle = osThreadCreate(osThread(USDistMeter), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -161,6 +190,14 @@ int main(void)
   /* definition and creation of debugQueue */
   osMessageQDef(debugQueue, 1024, float);
   debugQueueHandle = osMessageCreate(osMessageQ(debugQueue), NULL);
+
+  /* definition and creation of BuzzerQueue */
+  osMessageQDef(BuzzerQueue, 5, uint8_t);
+  BuzzerQueueHandle = osMessageCreate(osMessageQ(BuzzerQueue), NULL);
+
+  /* definition and creation of DistQueue */
+  osMessageQDef(DistQueue, 16, uint16_t);
+  DistQueueHandle = osMessageCreate(osMessageQ(DistQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -225,8 +262,10 @@ void SystemClock_Config(void)
     Error_Handler();
   }
 
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_UART7
+                              |RCC_PERIPHCLK_I2C1;
   PeriphClkInitStruct.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+  PeriphClkInitStruct.Uart7ClockSelection = RCC_UART7CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
@@ -266,6 +305,13 @@ static void MX_I2C1_Init(void)
     /**Configure Analogue filter 
     */
   if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+    /**Configure Digital filter 
+    */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -325,6 +371,66 @@ static void MX_TIM2_Init(void)
 
 }
 
+/* TIM3 init function */
+static void MX_TIM3_Init(void)
+{
+
+  TIM_MasterConfigTypeDef sMasterConfig;
+  TIM_OC_InitTypeDef sConfigOC;
+
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 15999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/* UART7 init function */
+static void MX_UART7_Init(void)
+{
+
+  huart7.Instance = UART7;
+  huart7.Init.BaudRate = 9600;
+  huart7.Init.WordLength = UART_WORDLENGTH_8B;
+  huart7.Init.StopBits = UART_STOPBITS_1;
+  huart7.Init.Parity = UART_PARITY_NONE;
+  huart7.Init.Mode = UART_MODE_RX;
+  huart7.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart7.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart7.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart7.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_RXINVERT_INIT;
+  huart7.AdvancedInit.RxPinLevelInvert = UART_ADVFEATURE_RXINV_ENABLE;
+  if (HAL_UART_Init(&huart7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
+
 /* USART1 init function */
 static void MX_USART1_Init(void)
 {
@@ -358,11 +464,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct;
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14|GPIO_PIN_7, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PE8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB14 PB7 */
   GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_7;
