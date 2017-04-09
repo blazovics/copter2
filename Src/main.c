@@ -47,7 +47,7 @@
 #include "fatfs.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "DebugTask.h"
 
 /* USER CODE END Includes */
 
@@ -58,8 +58,8 @@ I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart7;
-USART_HandleTypeDef husart1;
 
 osThreadId defaultTaskHandle;
 osThreadId IMUTaskHandle;
@@ -67,7 +67,6 @@ osThreadId DebugTaskHandle;
 osThreadId PWMTaskHandle;
 osThreadId BuzzerTaskHandle;
 osThreadId USDistMeterHandle;
-osMessageQId debugQueueHandle;
 osMessageQId BuzzerQueueHandle;
 osMessageQId DistQueueHandle;
 osSemaphoreId DistSyncBinarySemHandle;
@@ -85,7 +84,7 @@ void SystemClock_Config(void);
 void Error_Handler(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_USART1_Init(void);
+static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_UART7_Init(void);
@@ -127,13 +126,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
-  MX_USART1_Init();
+  MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_UART7_Init();
 
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_RESET);
+  setDebugUartHandler(&huart1);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -185,11 +185,6 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
-
-  /* Create the queue(s) */
-  /* definition and creation of debugQueue */
-  osMessageQDef(debugQueue, 1024, float);
-  debugQueueHandle = osMessageCreate(osMessageQ(debugQueue), NULL);
 
   /* definition and creation of BuzzerQueue */
   osMessageQDef(BuzzerQueue, 5, uint8_t);
@@ -432,19 +427,20 @@ static void MX_UART7_Init(void)
 }
 
 /* USART1 init function */
-static void MX_USART1_Init(void)
+static void MX_USART1_UART_Init(void)
 {
 
-  husart1.Instance = USART1;
-  husart1.Init.BaudRate = 115200;
-  husart1.Init.WordLength = USART_WORDLENGTH_7B;
-  husart1.Init.StopBits = USART_STOPBITS_1;
-  husart1.Init.Parity = USART_PARITY_NONE;
-  husart1.Init.Mode = USART_MODE_TX_RX;
-  husart1.Init.CLKPolarity = USART_POLARITY_LOW;
-  husart1.Init.CLKPhase = USART_PHASE_1EDGE;
-  husart1.Init.CLKLastBit = USART_LASTBIT_DISABLE;
-  if (HAL_USART_Init(&husart1) != HAL_OK)
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_7B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
   }
