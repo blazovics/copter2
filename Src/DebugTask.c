@@ -8,6 +8,10 @@
 #include "queue.h"
 #include "semphr.h"
 
+#include "USDist.h"
+
+extern UART_HandleTypeDef huart7;
+
 static UART_HandleTypeDef * localUartHandler = NULL;
 
 static QueueHandle_t queue;
@@ -67,4 +71,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     }
     HAL_UART_Receive_IT(localUartHandler, &rxBuf, 1);
   }
+
+  if (huart->Instance == huart7.Instance)
+	  Uart7SeperateCallback();
 }

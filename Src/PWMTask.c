@@ -34,7 +34,7 @@ extern TIM_HandleTypeDef htim2;
 #endif
 
 //f=1kHz, when clock frequency is 16MHz and timer uses no prescaler
-int PwmPeriod = 15999;
+static int PwmPeriod = 15999;
 
 //Copy of the common resource PwmDuty
 volatile double PwmCopy[] = { 0 , 0 , 0 , 0 };

@@ -277,12 +277,6 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
   /* USER CODE END UART7_MspInit 1 */
   }
 
-}
-
-void HAL_UART_MspInit(UART_HandleTypeDef* huart)
-{
-
-  GPIO_InitTypeDef GPIO_InitStruct;
   if(huart->Instance==USART1)
   {
   /* USER CODE BEGIN USART1_MspInit 0 */
@@ -319,6 +313,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
 }
 
+
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
 
@@ -345,11 +340,6 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
   /* USER CODE BEGIN UART7_MspDeInit 1 */
 
   /* USER CODE END UART7_MspDeInit 1 */
-
-}
-
-void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
-{
 
   if(huart->Instance==USART1)
   {

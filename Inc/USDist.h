@@ -10,6 +10,8 @@
 
 #define NUMBER_RX_DATA		5
 
+#include <stdint.h>
+
 typedef enum{
 	FREE,
 	RX_START,
@@ -17,5 +19,9 @@ typedef enum{
 }ReceiveState;
 
 void GetDistance(void const * argument);
+
+void Uart7SeperateCallback(void);
+
+void MyIntToCharArray5(uint32_t number, char* buffer);
 
 #endif /* USDIST_H_ */
