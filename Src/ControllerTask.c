@@ -14,7 +14,7 @@ void StartController(void const * argument) {
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
 
 		// send a test message every 10 ms
-
+/*
 		  DebugMessage test;
 		  test.dataCount = '4';
 		  test.messageId = 'x';
@@ -24,7 +24,7 @@ void StartController(void const * argument) {
 		  test.data[2] = 6.28;
 		  test.data[3] = 0;
 		  pushDebugMessage(test);
-
+*/
 
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_14);
 	}

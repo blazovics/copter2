@@ -87,7 +87,7 @@ void WriteDebug(void const * argument) {
   // pushMessage("UART initialization complete!\r\n");
   HAL_UART_Receive_IT(localUartHandler, &rxBuf, 1);
 
-  /*
+
   DebugMessage test;
   test.dataCount = '4';
   test.messageId = 'x';
@@ -97,7 +97,7 @@ void WriteDebug(void const * argument) {
   test.data[2] = 6.28;
   test.data[3] = 0;
   pushDebugMessage(test);
-  */
+
 
   for(;;) {
     osDelay(1000);
