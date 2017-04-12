@@ -10,7 +10,7 @@ void StartController(void const * argument) {
 	const TickType_t xFrequency = 10 * portTICK_PERIOD_MS;
 
 	xLastWakeTime = xTaskGetTickCount();
-	uint8_t cnt = 0;
+	// uint8_t cnt = 0;
 	for(;;)
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );

@@ -84,7 +84,7 @@ void WriteDebug(void const * argument) {
 	}
   queue = xQueueCreate(bufferSize, sizeof(char) * lineLength);
   debugQueue = xQueueCreate(bufferSize, sizeof(DebugMessage));
-  // pushMessage("UART initialization complete!\r\n");
+  pushMessage("UART initialization complete!\r\n");
   HAL_UART_Receive_IT(localUartHandler, &rxBuf, 1);
 
 
