@@ -10,7 +10,7 @@ void StartController(void const * argument) {
 	const TickType_t xFrequency = 10 * portTICK_PERIOD_MS;
 
 	xLastWakeTime = xTaskGetTickCount();
-	// uint8_t cnt = 0;
+	uint8_t cnt = 0;
 	for(;;)
 	{
 		vTaskDelayUntil( &xLastWakeTime, xFrequency );
@@ -28,11 +28,11 @@ void StartController(void const * argument) {
 		  pushDebugMessage(test);
 */
 		// test calling frequency
-		/*
+
 		char buf[256];
 		sprintf(buf, "%d|", cnt++);
 		pushMessage(buf);
-		*/
+
 		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_14);
 	}
 }
